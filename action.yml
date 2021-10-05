@@ -1,0 +1,29 @@
+name: argocd-render-manifests
+author: Gladly, Inc
+description: Render kubernetes manifests defined using helmfile
+
+inputs:
+  app:
+    description: The app to render manifests for.
+    required: true
+  targets:
+    description: Render targets.
+    required: false
+  sync:
+    description: Sync rendered manifests to out-dir
+    required: false
+    default: "true"
+  app-dir:
+    description: The base directory for app deployment config
+    required: false
+  out-dir:
+    description: The directory to sync rendered manifests to relative to project root
+    required: false
+
+runs:
+  using: docker
+  image: image/action/Dockerfile
+
+branding:
+  icon: printer
+  color: orange

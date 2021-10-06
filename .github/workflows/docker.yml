@@ -47,8 +47,8 @@ jobs:
         with:
           load: true
           context: image/base
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           tags: ${{ env.HELMFILE_RENDER_TEST_IMAGE }}
 
       - uses: docker/build-push-action@v2

@@ -57,10 +57,15 @@ jobs:
       - id: test
         run: |
           docker run --rm \
+            --volume=$PWD:/workspace \
+            --env=INPUT_SYNC=true \
+            --env=INPUT_PROJECT_DIR=/workspace \
+            --env=INPUT_TARGETS=local \
             --env=INPUT_APP=dashboard \
-            --env=INPUT_APP-DIR=tests/apps/dashboard \
-            --env=INPUT_OUT-DIR=tests/apps/dashboard/out \
+            --env=INPUT_APP_DIR=tests/apps/dashboard \
+            --env=INPUT_OUT_DIR=tests/apps/dashboard/out \
             ${{ env.HELMFILE_RENDER_ACTION_TEST_IMAGE }}
+          rm -rf tests/apps/dashboard/out
 
       - uses: docker/build-push-action@v2
         with:

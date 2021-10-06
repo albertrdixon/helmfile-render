@@ -108,11 +108,11 @@ function update_helm_repos() {
 
   echo "--> Updating helm repos for $app (helmfile repos)"
   env -i "${environment[@]}" \
-    helmfile "$([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug')" repos || true
+    helmfile $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') repos || true
 
   echo "--> Updating helm dependencies for $app (helmfile deps)"
   env -i "${environment[@]}" \
-    helmfile "$([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug')" deps --skip-repos || true
+    helmfile $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') deps --skip-repos || true
 
   rm -f helmfile.lock || true
 }
@@ -156,7 +156,7 @@ function render_manifests() {
   retry 3 \
     env -i "${HELMFILE_ENVIRONMENT[@]}" \
     helmfile --file="$app_dir/helmfile.yaml" \
-    "$([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug')" template \
+    $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') template \
     --args="--include-crds" \
     --concurrency=2 \
     --skip-deps \

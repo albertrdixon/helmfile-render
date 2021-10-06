@@ -1,5 +1,5 @@
-name: argocd-render-manifests
-author: Gladly, Inc
+name: Helmfile Render Manifests
+author: Albert Dixon
 description: Render kubernetes manifests defined using helmfile
 
 inputs:

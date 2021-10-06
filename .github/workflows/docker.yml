@@ -70,7 +70,6 @@ jobs:
             --env=INPUT_APP_DIR=tests/apps/dashboard \
             --env=INPUT_OUT_DIR=tests/apps/dashboard/out \
             ${{ env.HELMFILE_RENDER_ACTION_TEST_IMAGE }}
-          rm -rf tests/apps/dashboard/out
 
       - uses: docker/build-push-action@v2
         if: github.event_name != 'pull_request'

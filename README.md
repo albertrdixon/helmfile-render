@@ -1,4 +1,4 @@
-# Helmfile Render Action
+# Helmfile Render Manifests Action
 
 Use helmfile to render application manifests for use with GitOps controllers
 

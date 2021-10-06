@@ -6,6 +6,8 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+  pull_request:
+    branches: [main]
 
 env:
   HELMFILE_RENDER_TEST_IMAGE: albertdixon/helmfile-render:gha
@@ -38,7 +40,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v2
+      - id: build-helmfile-render-image
+        uses: docker/build-push-action@v2
         with:
           load: true
           context: image/base
@@ -52,7 +55,7 @@ jobs:
           context: image/action
           tags: ${{ env.HELMFILE_RENDER_ACTION_TEST_IMAGE }}
           build-args: |
-            base_image_tag=gha
+            base_image=${{ fromJson(steps.build-helmfile-render-image.metadata).image.name }}
 
       - id: test
         run: |
@@ -68,8 +71,9 @@ jobs:
           rm -rf tests/apps/dashboard/out
 
       - uses: docker/build-push-action@v2
+        if: github.event_name != 'pull_request'
         with:
           context: image/base
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}

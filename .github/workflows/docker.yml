@@ -55,7 +55,7 @@ jobs:
           context: image/action
           tags: ${{ env.HELMFILE_RENDER_ACTION_TEST_IMAGE }}
           build-args: |
-            base_image=${{ fromJson(steps.build-helmfile-render-image.metadata).image.name }}
+            base_image=${{ env.HELMFILE_RENDER_TEST_IMAGE }}
 
       - id: test
         run: |

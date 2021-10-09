@@ -20,9 +20,10 @@
 ###         Directory to sync rendered manifests to relative to project root. Defaults to `$project_dir/apps/$app/deploy/releases`. Only used if `sync` is set.
 ###   --project-dir DIR
 ###         Root directory for the project. If not set will use git to determine.
+###   --skip-deps
+###         Skip updating helm dependencies (`helmfile deps`)
 ###   -d | --debug
 ###         Enable debug mode
-
 source /usr/local/lib/script-utils.sh
 
 script_name="render-manifests"
@@ -33,6 +34,7 @@ long_flags=(
   "app:"
   "targets:"
   "sync"
+  "skip-deps"
   "debug"
   "help"
 )
@@ -100,19 +102,32 @@ function set_helmfile_environment() {
   fi
 }
 
-## Run helmfile repos and helmfile deps
-function update_helm_repos() {
-  local -r app="$1"
+function build_helmfile_args() {
+  local -n arr=$1
   shift
+  [[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && arr+=('--debug')
+  arr+=("$@")
+}
+
+## Run helmfile repos and helmfile deps
+function helm_dependency_update() {
+  local -r app="$1" skip_deps="$2"
+  shift 2
   local -a environment=("${@:-"${HELMFILE_ENVIRONMENT[@]}"}")
 
   echo "--> Updating helm repos for $app (helmfile repos)"
+  helmfile_args=()
+  build_helmfile_args helmfile_args 'repos'
   env -i "${environment[@]}" \
-    helmfile $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') repos || true
+    helmfile "${helmfile_args[@]}" || true
 
-  echo "--> Updating helm dependencies for $app (helmfile deps)"
-  env -i "${environment[@]}" \
-    helmfile $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') deps --skip-repos || true
+  if [[ "$skip_deps" = "false" ]]; then
+    echo "--> Updating helm dependencies for $app (helmfile deps)"
+    helmfile_args=()
+    build_helmfile_args helmfile_args 'deps' '--skip-repos'
+    env -i "${environment[@]}" \
+      helmfile "${helmfile_args[@]}" || true
+  fi
 }
 
 function set_render_targets() {
@@ -151,15 +166,17 @@ function render_manifests() {
   ## Generate the manifests
   ## `--skip-deps` is required if `--include-crds` is set
   echo "--> Rendering manifests for $app@$target (helmfile template)"
+  helmfile_args=()
+  build_helmfile_args helmfile_args \
+    'template' \
+    '--args="--include-crds"' \
+    '--concurrency=2' \
+    '--skip-deps' \
+    "--output-dir=$tmpdir" \
+    '--output-dir-template={{ .OutputDir }}/deploy/{{ .Release.Name }}'
   retry 3 \
     env -i "${HELMFILE_ENVIRONMENT[@]}" \
-    helmfile --file="$app_dir/helmfile.yaml" \
-    $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') template \
-    --args="--include-crds" \
-    --concurrency=2 \
-    --skip-deps \
-    --output-dir="$tmpdir" \
-    --output-dir-template="{{ .OutputDir }}/deploy/{{ .Release.Name }}"
+    helmfile "${helmfile_args[@]}"
   helmfile_template_status=$?
 
   if [[ $helmfile_template_status -eq 0 ]]; then
@@ -180,6 +197,7 @@ function render_manifests() {
 }
 
 do_rsync_manifests=false
+skip_deps="false"
 unset app
 unset -v RENDER_TARGETS
 
@@ -213,6 +231,10 @@ while true; do
   --project-dir)
     project_dir="$2"
     shift 2
+    ;;
+  --skip-deps)
+    skip_deps="true"
+    shift
     ;;
 
   -h | --help)
@@ -252,7 +274,7 @@ pushd "$app_dir" &>/dev/null || exit 1
 set_helmfile_environment "$app"
 
 ## Do helm repo and dependency setup once to avoid helm repository rate limiting
-update_helm_repos "$app" "${HELMFILE_ENVIRONMENT[@]}"
+helm_dependency_update "$app" "$skip_deps" "${HELMFILE_ENVIRONMENT[@]}"
 
 popd &>/dev/null || exit 1
 

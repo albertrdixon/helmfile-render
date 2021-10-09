@@ -19,6 +19,10 @@ inputs:
   out-dir:
     description: The directory to sync rendered manifests to relative to project root
     required: false
+  skip-deps:
+    description: Set to true to skip building dependencies (`helmfile dep`)
+    required: false
+    default: "false"
 
 runs:
   using: docker

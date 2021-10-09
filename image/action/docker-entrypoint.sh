@@ -24,6 +24,10 @@ if [[ "${INPUT_DEBUG:-${ACTIONS_STEP_DEBUG:-${ACTIONS_RUNNER_DEBUG}}}" = "true" 
   render_manifest_args+=("--debug")
 fi
 
+if [[ "${INPUT_SKIP_DEPS}" = "true" ]]; then
+  render_manifest_args+=("--skip-deps")
+fi
+
 if [[ "${INPUT_SYNC}" = "true" ]]; then
   render_manifest_args+=("--sync")
 fi

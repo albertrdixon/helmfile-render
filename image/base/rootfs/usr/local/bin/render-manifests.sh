@@ -24,7 +24,6 @@
 ###         Skip updating helm dependencies (`helmfile deps`)
 ###   -d | --debug
 ###         Enable debug mode
-
 source /usr/local/lib/script-utils.sh
 
 script_name="render-manifests"
@@ -171,8 +170,8 @@ function render_manifests() {
     '--args="--include-crds"'
     "--concurrency=2"
     "--skip-deps"
-    "--output-dir='$tmpdir'"
-    '--output-dir-template="{{ .OutputDir }}/deploy/{{ .Release.Name }}"'
+    "--output-dir=$tmpdir"
+    '--output-dir-template={{ .OutputDir }}/deploy/{{ .Release.Name }}'
   )
   retry 3 \
     env -i "${HELMFILE_ENVIRONMENT[@]}" \

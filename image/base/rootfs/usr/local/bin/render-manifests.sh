@@ -113,8 +113,6 @@ function update_helm_repos() {
   echo "--> Updating helm dependencies for $app (helmfile deps)"
   env -i "${environment[@]}" \
     helmfile $([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug') deps --skip-repos || true
-
-  rm -f helmfile.lock || true
 }
 
 function set_render_targets() {

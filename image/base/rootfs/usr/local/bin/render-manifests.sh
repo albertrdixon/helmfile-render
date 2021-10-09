@@ -102,6 +102,13 @@ function set_helmfile_environment() {
   fi
 }
 
+function build_helmfile_args() {
+  local -n arr=$1
+  shift
+  [[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && arr+=('--debug')
+  arr+=("$@")
+}
+
 ## Run helmfile repos and helmfile deps
 function helm_dependency_update() {
   local -r app="$1" skip_deps="$2"
@@ -109,20 +116,15 @@ function helm_dependency_update() {
   local -a environment=("${@:-"${HELMFILE_ENVIRONMENT[@]}"}")
 
   echo "--> Updating helm repos for $app (helmfile repos)"
-  helmfile_args=(
-    "$([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug')"
-    "repos"
-  )
+  helmfile_args=()
+  build_helmfile_args helmfile_args 'repos'
   env -i "${environment[@]}" \
     helmfile "${helmfile_args[@]}" || true
 
   if [[ "$skip_deps" = "false" ]]; then
     echo "--> Updating helm dependencies for $app (helmfile deps)"
-    helmfile_args=(
-      "$([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug')"
-      "deps"
-      "--skip-repos"
-    )
+    helmfile_args=()
+    build_helmfile_args helmfile_args 'deps' '--skip-repos'
     env -i "${environment[@]}" \
       helmfile "${helmfile_args[@]}" || true
   fi
@@ -164,15 +166,14 @@ function render_manifests() {
   ## Generate the manifests
   ## `--skip-deps` is required if `--include-crds` is set
   echo "--> Rendering manifests for $app@$target (helmfile template)"
-  helmfile_args=(
-    "$([[ "$RENDER_MANIFEST_DEBUG" = "true" ]] && echo '--debug')"
-    "template"
-    '--args="--include-crds"'
-    "--concurrency=2"
-    "--skip-deps"
-    "--output-dir=$tmpdir"
+  helmfile_args=()
+  build_helmfile_args helmfile_args \
+    'template' \
+    '--args="--include-crds"' \
+    '--concurrency=2' \
+    '--skip-deps' \
+    "--output-dir=$tmpdir" \
     '--output-dir-template={{ .OutputDir }}/deploy/{{ .Release.Name }}'
-  )
   retry 3 \
     env -i "${HELMFILE_ENVIRONMENT[@]}" \
     helmfile "${helmfile_args[@]}"

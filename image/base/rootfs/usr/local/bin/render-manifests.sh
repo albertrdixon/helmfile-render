@@ -22,6 +22,8 @@
 ###         Root directory for the project. If not set will use git to determine.
 ###   --skip-deps
 ###         Skip updating helm dependencies (`helmfile deps`)
+###   --skip-crds
+###         Do not render CRDs
 ###   -d | --debug
 ###         Enable debug mode
 source /usr/local/lib/script-utils.sh
@@ -29,24 +31,25 @@ source /usr/local/lib/script-utils.sh
 script_name="render-manifests"
 long_flags=(
   "app-dir:"
-  "out-dir:"
-  "project-dir:"
   "app:"
-  "targets:"
-  "sync"
-  "skip-deps"
   "debug"
   "help"
+  "out-dir:"
+  "project-dir:"
+  "skip-crds"
+  "skip-deps"
+  "sync"
+  "targets:"
 )
 short_flags=(
-  "h"
-  "y"
-  "d"
   "a:"
   "A:"
+  "d"
+  "h"
+  "n:"
   "O:"
   "t:"
-  "n:"
+  "y"
 )
 
 options=$(getopt -n "$script_name" \
@@ -147,7 +150,7 @@ function set_render_targets() {
 function render_manifests() {
   local -r app="$1" target="$2" \
     app_dir="$3" out_dir="$4" \
-    do_rsync_manifests="$5"
+    do_rsync_manifests="$5" skip_crds="$6"
   local tmpdir="${TMPDIR:-"/tmp"}/render-$app-$target.$GIT_HEAD_SHA"
 
   if [[ "$CI" = "true" ]]; then
@@ -169,11 +172,11 @@ function render_manifests() {
   helmfile_args=()
   build_helmfile_args helmfile_args \
     'template' \
-    '--args="--include-crds"' \
     '--concurrency=2' \
     '--skip-deps' \
     "--output-dir=$tmpdir" \
     '--output-dir-template={{ .OutputDir }}/deploy/{{ .Release.Name }}'
+  [[ "$skip_crds" = "false" ]] && helmfile_args+=('--args=--include-crds')
   retry 3 \
     env -i "${HELMFILE_ENVIRONMENT[@]}" \
     helmfile "${helmfile_args[@]}"
@@ -198,6 +201,7 @@ function render_manifests() {
 
 do_rsync_manifests=false
 skip_deps="false"
+skip_crds="false"
 unset app
 unset -v RENDER_TARGETS
 
@@ -234,6 +238,10 @@ while true; do
     ;;
   --skip-deps)
     skip_deps="true"
+    shift
+    ;;
+  --skip-crds)
+    skip_crds="true"
     shift
     ;;
 
@@ -289,7 +297,8 @@ for target in "${RENDER_TARGETS[@]}"; do
   render_manifests "$app" "$target" \
     "$app_dir" \
     "$(realpath -qmsL "${out_dir:-"$app_dir/deploy/releases"}")" \
-    "$do_rsync_manifests"
+    "$do_rsync_manifests" \
+    "$skip_crds"
   render_manifest_status=$?
 
   if [[ $render_manifest_status -ne 0 ]]; then

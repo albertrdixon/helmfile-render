@@ -28,6 +28,10 @@ if [[ "${INPUT_SKIP_DEPS}" = "true" ]]; then
   render_manifest_args+=("--skip-deps")
 fi
 
+if [[ "${INPUT_SKIP_CRDS}" = "true" ]]; then
+  render_manifest_args+=("--skip-crds")
+fi
+
 if [[ "${INPUT_SYNC}" = "true" ]]; then
   render_manifest_args+=("--sync")
 fi

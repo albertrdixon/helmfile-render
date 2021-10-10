@@ -23,6 +23,10 @@ inputs:
     description: Set to true to skip building dependencies (`helmfile dep`)
     required: false
     default: "false"
+  skip-crds:
+    description: Set to true to not render CRDs
+    required: false
+    default: "false"
 
 runs:
   using: docker

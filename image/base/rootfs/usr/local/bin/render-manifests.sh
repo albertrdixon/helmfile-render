@@ -65,7 +65,7 @@ eval set -- "$options"
 
 function get_targets_dir() {
   local -r app_dir="$1"
-  realpath -qmsL "$app_dir/deploy/targets"
+  realpath -qmsL "$app_dir/targets"
 }
 
 ## Environment variables that will be set for helmfile tasks

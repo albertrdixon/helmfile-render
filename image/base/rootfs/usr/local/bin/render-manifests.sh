@@ -65,7 +65,7 @@ eval set -- "$options"
 
 function get_targets_dir() {
   local -r app_dir="$1"
-  realpath -qmsL "$app_dir/targets"
+  realpath -qmsL "$app_dir/deploy/targets"
 }
 
 ## Environment variables that will be set for helmfile tasks
@@ -188,10 +188,10 @@ function render_manifests() {
     echo "--> Manifests rendered under directory $tmpdir"
 
     if [[ "$do_rsync_manifests" = "true" ]]; then
-      echo "--> Copying manifests to $out_dir/$target"
+      echo "--> Copying manifests to $out_dir"
       mkdir -vp "$out_dir"
       rsync -h --progress --recursive --checksum --delete-during \
-        "$tmpdir/deploy/" "$out_dir/$target"
+        "$tmpdir/deploy/" "$out_dir"
     fi
     true
   else
@@ -296,7 +296,7 @@ for target in "${RENDER_TARGETS[@]}"; do
 
   render_manifests "$app" "$target" \
     "$app_dir" \
-    "$(realpath -qmsL "${out_dir:-"$app_dir/deploy/releases"}")" \
+    "$(realpath -qmsL "${out_dir:-"$app_dir/deploy/$target/releases"}")" \
     "$do_rsync_manifests" \
     "$skip_crds"
   render_manifest_status=$?

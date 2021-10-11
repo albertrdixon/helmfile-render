@@ -43,6 +43,7 @@ RUN apk add --update --no-cache \
   curl \
   dumb-init \
   git \
+  jq \
   rsync \
   util-linux
 

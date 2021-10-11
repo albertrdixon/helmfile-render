@@ -71,7 +71,10 @@ function get_targets_dir() {
 ## Environment variables that will be set for helmfile tasks
 function set_helmfile_environment() {
   local -r app="$1" target="$2" app_dir="$3"
-  local -r targets_dir="$(get_targets_dir "$app_dir")"
+  local targets_dir=""
+  if [[ -n "$app_dir" ]]; then
+    targets_dir="$(get_targets_dir "$app_dir")"
+  fi
 
   HELMFILE_ENVIRONMENT=(
     PATH="$PATH"
@@ -88,11 +91,11 @@ function set_helmfile_environment() {
   HELMFILE_ENVIRONMENT+=("${helm_env[@]}")
   unset -v helm_env
 
-  if [[ -f "$targets_dir/$target.yaml" ]]; then
-    mapfile -t target_env < <(yq e -o j <<<"$$target_dir/$target.yaml" | jq -r 'keys[] as $k | "\($k)=\(.[$k]|tostring|@sh)"' 2>/dev/null)
+  if [[ -n "$targets_dir" ]] && [[ -f "$targets_dir/$target.yaml" ]]; then
+    mapfile -t target_env < <(yq e -o j <<<"$targets_dir/$target.yaml" | jq -r 'keys[] as $k | "\($k|gsub("[\.-]+","_")|ascii_upcase)=\(.[$k]|tostring|@sh)"' 2>/dev/null)
     HELMFILE_ENVIRONMENT+=("${target_env[@]}")
-  elif [[ -f "$targets_dir/$target.json" ]]; then
-    mapfile -t target_env < <(yq e -o j <<<"$$target_dir/$target.json" | jq -r 'keys[] as $k | "\($k)=\(.[$k]|tostring|@sh)"' 2>/dev/null)
+  elif [[ -n "$targets_dir" ]] && [[ -f "$targets_dir/$target.json" ]]; then
+    mapfile -t target_env < <(yq e -o j <<<"$targets_dir/$target.json" | jq -r 'keys[] as $k | "\($kgsub("[\.-]+","_")|ascii_upcase)=\(.[$k]|tostring|@sh)"' 2>/dev/null)
     HELMFILE_ENVIRONMENT+=("${target_env[@]}")
   fi
   unset -v target_env

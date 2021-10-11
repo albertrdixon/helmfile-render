@@ -92,10 +92,12 @@ function set_helmfile_environment() {
   unset -v helm_env
 
   if [[ -n "$targets_dir" ]] && [[ -f "$targets_dir/$target.yaml" ]]; then
-    mapfile -t target_env < <(yq e -o j <"$targets_dir/$target.yaml" | jq -r 'keys[] as $k | "\($k|gsub("[\\.-]+";"_")|ascii_upcase)=\(.[$k]|tostring|@sh)"' 2>/dev/null)
+    mapfile -t target_env < <(yq e -o j <"$targets_dir/$target.yaml" \
+    | jq -r '. as $in | reduce paths(scalars) as $path ({}; . + { ($path|join("#")|gsub("[^\\w]+";"_")|ascii_upcase): $in | getpath($path) }) | keys[] as $k | "\($k)=\(.[$k]|@text)"' 2>/dev/null)
     HELMFILE_ENVIRONMENT+=("${target_env[@]}")
   elif [[ -n "$targets_dir" ]] && [[ -f "$targets_dir/$target.json" ]]; then
-    mapfile -t target_env < <(yq e -o j <"$targets_dir/$target.json" | jq -r 'keys[] as $k | "\($k|gsub("[\\.-]+";"_")|ascii_upcase)=\(.[$k]|tostring|@sh)"' 2>/dev/null)
+    mapfile -t target_env < <(yq e -o j <"$targets_dir/$target.json" \
+    | jq -r '. as $in | reduce paths(scalars) as $path ({}; . + { ($path|join("#")|gsub("[^\\w]+";"_")|ascii_upcase): $in | getpath($path) }) | keys[] as $k | "\($k)=\(.[$k]|@text)"' 2>/dev/null)
     HELMFILE_ENVIRONMENT+=("${target_env[@]}")
   fi
   unset -v target_env

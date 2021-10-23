@@ -28,6 +28,10 @@ inputs:
     required: false
     default: "false"
 
+outputs:
+  rendered:
+    description: A semicolon separated list of apps rendered with chart release versions
+
 runs:
   using: docker
   image: image/action/Dockerfile

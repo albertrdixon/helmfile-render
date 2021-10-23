@@ -295,6 +295,7 @@ popd &>/dev/null || exit 1
 ## loop through all clusters, if the app is enabled for that cluster, then render manifests
 ## optionally delete rendered manifests if app is disabled
 [[ ${#RENDER_TARGETS[@]} -eq 0 ]] && set_render_targets "$app_dir"
+declare -a rendered
 for target in "${RENDER_TARGETS[@]}"; do
   echo
   echo "--> Running for ${app}@${target}"
@@ -309,5 +310,12 @@ for target in "${RENDER_TARGETS[@]}"; do
   if [[ $render_manifest_status -ne 0 ]]; then
     error_exit "helmfile template failed: error_code=$render_manifest_status" $render_manifest_status
   fi
+
+  pushd "$app_dir" 2>/dev/null || exit
+  releases="$(helmfile list --output json | jq -r '[ .[] | "\(.name)=\(.version)" ] | join(",")')"
+  rendered+=("${app}@${target}/${releases}")
+  popd 2>/dev/null || exit
   echo
 done
+
+echo "::set-output ::name=rendered::$(join_by ";" ${rendered[@]})"

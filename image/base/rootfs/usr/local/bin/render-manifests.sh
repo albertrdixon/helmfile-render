@@ -318,4 +318,5 @@ for target in "${RENDER_TARGETS[@]}"; do
   echo
 done
 
+# shellcheck disable=SC2068
 echo "::set-output ::name=rendered::$(join_by ";" ${rendered[@]})"

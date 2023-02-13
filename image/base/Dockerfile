@@ -1,4 +1,4 @@
-FROM alpine:3.15.0 AS tools
+FROM alpine:3.17.2 AS tools
 
 ARG HELM_VERSION
 ARG HELMFILE_VERSION=latest
@@ -27,7 +27,7 @@ RUN mkdir /tools \
   && chmod 755 /tools/kubectl \
   && /tools/kubectl version --client=true
 
-FROM alpine:3.15.0
+FROM alpine:3.17.2
 COPY --from=tools /tools/* /usr/local/bin/
 COPY --from=tools /usr/local/bin/helm /usr/local/bin/
 COPY rootfs/ /
